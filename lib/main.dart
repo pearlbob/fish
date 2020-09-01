@@ -3,9 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-int _paintCounter = 0; //  debug
+//  to run on linux desktop:
+//  from the shell, in the root directory:
+//  flutter -d linux create .
+
 Canvas _canvas; //  handy reference
-Size _paintSize = Size(800, 600);
+Size _paintSize;
 
 void main() {
   runApp(MyApp());
@@ -61,12 +64,8 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
   void initState() {
     super.initState();
 
-    for (int i = 0; i < 25; i++) _shapes.add(CircleShape());
-
     _ticker = createTicker((Duration elapsed) {
-      setState(() {
-        _paintCounter++;
-      });
+      setState(() {});
     });
     _ticker.start();
   }
@@ -89,38 +88,10 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.all(10),
-              child: Container(
-                color: Colors.white,
-                width: _paintSize.width,
-                height: _paintSize.height,
-                child: CustomPaint(painter: _FishPainter()),
-              ),
-            ),
-          ],
-        ),
+      body: Container(
+        color: Colors.white,
+        constraints: BoxConstraints.expand(),
+        child: CustomPaint(painter: _FishPainter()),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _doPlusButton,
@@ -145,26 +116,15 @@ class _FishPainter extends CustomPainter {
     _canvas = canvas;
     _paintSize = paintSize;
 
+    if (_shapes.isEmpty) {
+      //  fixme: odd moment to call initialization... but it has to happen after paint size initialization
+      for (int i = 0; i < 75; i++) {
+        _shapes.add(CircleShape());
+      }
+    }
+
     //  clear the pond
     _canvas.drawRect(Rect.fromLTWH(0, 0, paintSize.width, paintSize.height), _blue);
-
-    //  debug counter
-    // TextPainter(
-    //   text: TextSpan(
-    //     text: _paintCounter.toString(),
-    //     style: TextStyle(
-    //       fontFamily: 'Bravura',
-    //       color: Colors.black54,
-    //       fontSize: 20,
-    //     ),
-    //   ),
-    //   textDirection: TextDirection.ltr,
-    // )
-    //   ..layout(
-    //     minWidth: 0,
-    //     maxWidth: 200,
-    //   )
-    //   ..paint(_canvas, Offset(10, 10));
 
     //  increment and paint the shapes
     for (Shape shape in _shapes) {
@@ -183,7 +143,8 @@ List<Shape> _shapes = [];
 
 class CircleShape extends Shape {
   CircleShape() {
-    _r = 10.0 + _random.nextDouble() * 20.0;
+    double minDim = min(_paintSize.width, _paintSize.height) * 0.015;
+    _r = minDim + _random.nextDouble() * minDim * 2;
     _size = Point(2 * _r, 2 * _r);
     //  reset the location based on the new size
     _location =
@@ -191,11 +152,11 @@ class CircleShape extends Shape {
     _paint = Paint()
       ..color = Color.fromARGB(
           255, // opaque
-          (_random.nextDouble() * 255).toInt(), //
-          (_random.nextDouble() * 255).toInt(), //
-          (_random.nextDouble() * 255).toInt()
-          // fixme: worry about random color that matches the background too well!
+          128 + (_random.nextDouble() * 127).toInt(), //
+          128 + (_random.nextDouble() * 127).toInt(), //
+          64 + (_random.nextDouble() * 191).toInt()
           );
+    //  note: with the above coloring, the background color cannot be matched
   }
 
   @override
@@ -229,31 +190,31 @@ class Shape {
   void tick() {
     _location = Point(_location.x + _velocity.x, _location.y + _velocity.y);
 
-    //  bounce off the paint boundary
+    //  bounce off the boundary
     if (_location.x <= 0) {
       _velocity = Point(-_velocity.x, velocity.y); //  reverse x direction
       _location = Point(_location.x + _velocity.x, _location.y);
     } else if (_location.x + _size.x >= _paintSize.width) {
       _velocity = Point(-_velocity.x, velocity.y); //  reverse x direction
-      _location = Point(_location.x + _velocity.x, _location.y);
+      _location = Point(_location.x - _velocity.x.abs(), _location.y);
     }
     if (_location.y <= 0) {
       _velocity = Point(_velocity.x, -velocity.y); //  reverse y direction
       _location = Point(_location.x, _location.y + _velocity.y);
     } else if (_location.y + _size.y >= _paintSize.height) {
       _velocity = Point(_velocity.x, -velocity.y); //  reverse y direction
-      _location = Point(_location.x, _location.y + _velocity.y);
+      _location = Point(_location.x, _location.y - _velocity.y.abs());
     }
+
+    //  todo: look for other fish, react to their velocity
 
     //  todo: bounce off other shapes
 
-    //  assert truths
-    assert(_velocity.x <= -minimumSpeed || _velocity.x >= minimumSpeed);  //  temporary
-    assert(_velocity.y <= -minimumSpeed || _velocity.y >= minimumSpeed);  //  temporary
-    assert(_location.x >= 0);
-    assert(_location.x <= _paintSize.width - _size.x);
-    assert(_location.y >= 0);
-    assert(_location.y <= _paintSize.height - _size.y);
+    // assert truths... not true when window size changes!
+    // assert(_location.x >= 0);
+    // assert(_location.x <= _paintSize.width - _size.x);
+    // assert(_location.y >= 0);
+    // assert(_location.y <= _paintSize.height - _size.y);
   }
 }
 
@@ -262,4 +223,3 @@ final _random = new Random();
 
 Paint _blue = Paint()..color = Colors.lightBlueAccent;
 Paint _black54 = Paint()..color = Colors.black54;
-Paint _orange = Paint()..color = Colors.orange;
