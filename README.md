@@ -9,4 +9,4 @@ It is intended solely as visual amusement and a software teaching tool.
 
 ##  Snapshot
 
-[A fishy snapshot] (/images/fish.png)
+![A fishy snapshot](/images/fish.png)
