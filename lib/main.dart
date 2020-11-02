@@ -7,8 +7,8 @@ import 'package:flutter/scheduler.dart';
 //  from the shell, in the root directory:
 //  flutter -d linux create .
 
-Canvas _canvas; //  handy reference
-Size _paintSize;
+Canvas? _canvas; //  handy reference
+Size _paintSize = Size(0,0);
 
 void main() {
   runApp(MyApp());
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key? key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -53,7 +53,7 @@ class MyHomePage extends StatefulWidget {
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
 
-  final String title;
+  final String? title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -67,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     _ticker = createTicker((Duration elapsed) {
       setState(() {});
     });
-    _ticker.start();
+    _ticker?.start();
   }
 
   void _doPlusButton() {
@@ -86,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text(widget.title??'title'),
       ),
       body: Container(
         color: Colors.white,
@@ -103,11 +103,11 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _ticker?.dispose();
     super.dispose();
   }
 
-  Ticker _ticker;
+  Ticker? _ticker;
 }
 
 class _FishPainter extends CustomPainter {
@@ -124,7 +124,7 @@ class _FishPainter extends CustomPainter {
     }
 
     //  clear the pond
-    _canvas.drawRect(Rect.fromLTWH(0, 0, paintSize.width, paintSize.height), _blue);
+    _canvas?.drawRect(Rect.fromLTWH(0, 0, paintSize.width, paintSize.height), _blue);
 
     //  increment and paint the shapes
     for (Shape shape in _shapes) {
@@ -162,11 +162,11 @@ class CircleShape extends Shape {
   @override
   void paint() {
     //  circle centered on upper left to bounce properly from rectangular upper left limits
-    _canvas.drawCircle(Offset(_location.x + _r, _location.y + _r), _r, _paint);
+    _canvas?.drawCircle(Offset(_location.x + _r, _location.y + _r), _r, _paint);
   }
 
-  double _r;
-  Paint _paint;
+  double _r=0;
+  Paint _paint = Paint();
 }
 
 class Shape {
@@ -184,7 +184,7 @@ class Shape {
 
   void paint() {
     //  default paint, intended to be overwritten
-    _canvas.drawRect(Rect.fromLTWH(_location.x, _location.y, 20.0, 5.0), _black54);
+    _canvas?.drawRect(Rect.fromLTWH(_location.x.toDouble(), _location.y.toDouble(), 20.0, 5.0), _black54);
   }
 
   void tick() {
