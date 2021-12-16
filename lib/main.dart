@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:logging/logging.dart';
 
 //  to run on linux desktop:
 //  from the shell, in the root directory:
@@ -10,7 +11,10 @@ import 'package:flutter/scheduler.dart';
 Canvas? _canvas; //  handy reference
 Size _paintSize = Size(0,0);
 
+final logger = Logger('fish');
+
 void main() {
+  logger.info('here');
   runApp(MyApp());
 }
 
